@@ -1,0 +1,59 @@
+name: Auto Build BMS189 Nupkg
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-nupkg:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version
+        id: version
+        run: |
+          $v = Get-Content version.txt
+          echo "version=$v" >> $env:GITHUB_ENV
+          Write-Host "Using version: $v"
+
+      - name: Install Chocolatey
+        run: |
+          Set-ExecutionPolicy Bypass -Scope Process -Force
+          Invoke-WebRequest https://community.chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
+
+      - name: Build nupkg
+        run: |
+          choco pack
+          $v = $env:version
+          Write-Host "Built: bms189.$v.nupkg"
+
+      - name: Prepare choco directory
+        run: |
+          if (!(Test-Path "choco")) {
+            New-Item -ItemType Directory -Path "choco"
+          }
+
+      - name: Move nupkg to choco directory
+        run: |
+          $v = $env:version
+          Move-Item "bms189.$v.nupkg" "choco/bms189.$v.nupkg" -Force
+
+      - name: Clean old nupkg files (keep latest 20)
+        run: |
+          $files = Get-ChildItem "choco" -Filter "*.nupkg" | Sort-Object LastWriteTime -Descending
+          $files | Select-Object -Skip 20 | Remove-Item -Force
+
+      - name: Commit and push changes
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add choco/
+          git commit -m "Auto update nupkg for version $env:version" || echo "Nothing to commit"
+          git push || echo "Nothing to push"
