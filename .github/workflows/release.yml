@@ -1,0 +1,113 @@
+name: Auto Release BMS189 Server
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Initialize or Increment version.txt (custom rules)
+        id: versioning
+        run: |
+          $commitMsg = git log -1 --pretty=%B
+          Write-Host "Last commit message: $commitMsg"
+
+          $level = "patch"
+          if ($commitMsg -match '\[major\]' -or $commitMsg -match 'MAJOR:') {
+            $level = "major"
+          } elseif ($commitMsg -match '\[minor\]' -or $commitMsg -match 'MINOR:') {
+            $level = "minor"
+          }
+
+          Write-Host "Detected version level: $level"
+
+          $file = "version.txt"
+          if (!(Test-Path $file)) {
+            $version = "1.0.0"
+            Write-Host "version.txt not found, init to $version"
+          } else {
+            $version = (Get-Content $file).Trim()
+            Write-Host "Current version: $version"
+          }
+
+          $parts = $version.Split(".")
+          [int]$major = $parts[0]
+          [int]$minor = $parts[1]
+          [int]$patch = $parts[2]
+
+          switch ($level) {
+            "major" {
+              $major++
+              $minor = 0
+              $patch = 0
+            }
+            "minor" {
+              $minor++
+              $patch = 0
+            }
+            "patch" {
+              $patch++
+            }
+          }
+
+          $newVersion = "$major.$minor.$patch"
+          Write-Host "New version: $newVersion"
+
+          Set-Content -Path $file -Value $newVersion
+          echo "version=$newVersion" >> $env:GITHUB_ENV
+
+      - name: Copy version.txt to server folder
+        run: |
+          Copy-Item version.txt BMS189Server/version.txt -Force
+          Write-Host "version.txt copied to BMS189Server/"
+
+      - name: Zip BMS189Server
+        run: |
+          Compress-Archive -Path BMS189Server -DestinationPath BMS189Server.zip -Force
+          Write-Host "BMS189Server.zip created"
+
+      - name: Zip update folder
+        run: |
+          if (Test-Path "update") {
+            Compress-Archive -Path update -DestinationPath update.zip -Force
+            Write-Host "update.zip created"
+          }
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.version }}
+          files: |
+            BMS189Server.zip
+            update.zip
+            version.txt
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup old releases
+        run: |
+          $releases = gh release list --limit 100 | Select-Object -Skip 5
+          foreach ($r in $releases) {
+            $tag = $r.Split(" ")[0]
+            if ($tag) {
+              gh release delete $tag -y
+            }
+          }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cleanup old workflow artifacts
+        uses: kolpav/purge-artifacts-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          expire-in: 1day
