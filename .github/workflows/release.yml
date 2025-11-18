@@ -1,4 +1,4 @@
-name: Auto Release BMS189 (GoogleDrive ZIP + Windows)
+name: Auto Release BMS189 (GoogleDrive DirectLink ZIP + Discord)
 
 on:
   push:
@@ -14,13 +14,12 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 1️⃣ Install gdown (for Windows)
+    # 1️⃣ Install gdown (optional, but we use curl for direct URL)
     - name: Install gdown
       run: pip install gdown
 
     # 2️⃣ Versioning
     - name: Versioning
-      id: version
       shell: pwsh
       run: |
         $msg = git log -1 --pretty=%B
@@ -49,34 +48,39 @@ jobs:
         Set-Content version.txt $new
         echo "version=$new" >> $env:GITHUB_ENV
 
-    # 3️⃣ Download server ZIP
-    - name: Download server zip
+    # 3️⃣ Download server ZIP (using your provided Google Drive URL)
+    - name: Download server ZIP
       shell: pwsh
       run: |
-        gdown --fuzzy "${{ secrets.SERVER_URL }}" -O BMS189Server_full.zip
+        $url = "${{ secrets.SERVER_URL }}"
+        Invoke-WebRequest -Uri $url -OutFile "BMS189Server_full.zip"
+        Write-Host "Downloaded: BMS189Server_full.zip"
 
-    # 4️⃣ Extract server ZIP (Windows supports Chinese filenames!)
+    # 4️⃣ Extract server ZIP (Windows supports Chinese filenames)
     - name: Extract server ZIP
       shell: pwsh
       run: |
+        if (Test-Path "server") { Remove-Item "server" -Recurse -Force }
         Expand-Archive -LiteralPath "BMS189Server_full.zip" -DestinationPath "server" -Force
 
-    # 5️⃣ Repack
+    # 5️⃣ Repack server ZIP for release usage
     - name: Repack server ZIP
       shell: pwsh
       run: |
-        Compress-Archive -Path server -DestinationPath BMS189Server.zip -Force
+        if (Test-Path "BMS189Server.zip") { Remove-Item "BMS189Server.zip" -Force }
+        Compress-Archive -Path "server" -DestinationPath "BMS189Server.zip" -Force
 
     # 6️⃣ Zip update folder
-    - name: Zip update
+    - name: Zip update folder
       shell: pwsh
       run: |
         if (Test-Path "update") {
-          Compress-Archive -Path update -DestinationPath update.zip -Force
+          if (Test-Path "update.zip") { Remove-Item "update.zip" -Force }
+          Compress-Archive -Path "update" -DestinationPath "update.zip" -Force
         }
 
-    # 7️⃣ Create Release
-    - name: Create Release
+    # 7️⃣ Create GitHub Release
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ env.version }}
@@ -87,8 +91,8 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 8️⃣ Discord notify
-    - name: Send Discord message
+    # 8️⃣ Discord Notification
+    - name: Send Discord Notification
       shell: pwsh
       run: |
         $VERSION = "${{ env.version }}"
@@ -106,6 +110,7 @@ jobs:
                 @{ name = "下載連結"; value = $RELEASE_URL }
               )
               footer = @{ text = "BMS189 自動化發布系統" }
+              timestamp = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
             }
           )
         } | ConvertTo-Json -Depth 10
