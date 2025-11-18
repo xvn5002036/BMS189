@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>bms189</id>
+    <version>1.0.0</version>
+    <title>BMS189 Server Auto Installer</title>
+    <authors>xvn5002036</authors>
+    <description>BMS189 fully automated server deployment.</description>
+  </metadata>
+</package>
