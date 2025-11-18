@@ -21,7 +21,7 @@ jobs:
       uses: actions/checkout@v4
 
     #######################################################
-    # 2️⃣ Load version from version.txt
+    # 2️⃣ 讀取版本號
     #######################################################
     - name: Read version
       shell: pwsh
@@ -35,7 +35,7 @@ jobs:
         Write-Host "Loaded version: $v"
 
     #######################################################
-    # 3️⃣ Install Chocolatey
+    # 3️⃣ 安裝 Chocolatey
     #######################################################
     - name: Install Chocolatey
       shell: pwsh
@@ -44,7 +44,7 @@ jobs:
         iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
     #######################################################
-    # 4️⃣ Build .nupkg 正式包
+    # 4️⃣ Build nupkg
     #######################################################
     - name: Build nupkg
       shell: pwsh
@@ -54,42 +54,59 @@ jobs:
         Write-Host "nupkg created."
 
     #######################################################
-    # 5️⃣ 建立 choco 目錄
+    # 5️⃣ 確保 choco/ 和 docs/ 存在
     #######################################################
-    - name: Prepare choco directory
+    - name: Ensure folders exist
       shell: pwsh
       run: |
         if (!(Test-Path "choco")) { New-Item -ItemType Directory -Path "choco" | Out-Null }
+        if (!(Test-Path "docs")) { New-Item -ItemType Directory -Path "docs" | Out-Null }
 
     #######################################################
-    # 6️⃣ 把 nupkg 移動到 choco/
+    # 6️⃣ 移動 nupkg → choco/
     #######################################################
-    - name: Move nupkg to choco directory
+    - name: Move nupkg to choco
       shell: pwsh
       run: |
         Get-ChildItem "*.nupkg" | Move-Item -Destination "choco" -Force
         Write-Host "Moved nupkg to choco folder."
 
     #######################################################
-    # 7️⃣ 清理舊版本（保留最新 20）
+    # 7️⃣ 同步 nupkg → docs (GitHub Pages Feed)
     #######################################################
-    - name: Clean old nupkg files (keep latest 20)
+    - name: Copy nupkg to docs (Pages feed)
       shell: pwsh
       run: |
-        $files = Get-ChildItem "choco" -Filter "*.nupkg" | Sort-Object LastWriteTime -Descending
-        if ($files.Count -gt 20) {
-          $files | Select-Object -Skip 20 | Remove-Item -Force
-        }
+        Copy-Item "choco\bms189.$env:version.nupkg" "docs/bms189.$env:version.nupkg" -Force
 
     #######################################################
-    # 8️⃣ Push 更新後的 nupkg 至 Repo
+    # 8️⃣ 重新生成 docs/index.json
     #######################################################
-    - name: Commit and push changes
+    - name: Build index.json
+      shell: pwsh
+      run: |
+        $json = @{
+          Packages = @(
+            @{
+              Id = "bms189"
+              Version = "$env:version"
+              DownloadUrl = "bms189.$env:version.nupkg"
+            }
+          )
+        } | ConvertTo-Json -Depth 10
+
+        Set-Content -Path "docs/index.json" -Value $json -Encoding UTF8
+        Write-Host "index.json generated."
+
+    #######################################################
+    # 9️⃣ Push 更新到 GitHub
+    #######################################################
+    - name: Commit and push
       shell: pwsh
       run: |
         git config user.email "actions@github.com"
         git config user.name "GitHub Actions"
 
-        git add choco
-        git commit -m "Auto update nupkg for version $env:version" || echo "Nothing to commit."
+        git add choco docs
+        git commit -m "Update Chocolatey package v$env:version" || echo "Nothing to commit."
         git push origin main
