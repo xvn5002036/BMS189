@@ -1,4 +1,4 @@
-name: Auto Release BMS189 (GoogleDrive DirectLink ZIP + Discord)
+name: Auto Release BMS189 (GoogleDrive ZIP + Windows + Discord)
 
 on:
   push:
@@ -14,11 +14,9 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 1️⃣ Install gdown (optional, but we use curl for direct URL)
-    - name: Install gdown
-      run: pip install gdown
-
-    # 2️⃣ Versioning
+    #############################################
+    # 1️⃣ Versioning
+    #############################################
     - name: Versioning
       shell: pwsh
       run: |
@@ -48,38 +46,54 @@ jobs:
         Set-Content version.txt $new
         echo "version=$new" >> $env:GITHUB_ENV
 
-    # 3️⃣ Download server ZIP (using your provided Google Drive URL)
-    - name: Download server ZIP
-      shell: pwsh
+    #############################################
+    # 2️⃣ Download Server ZIP (Google Drive)
+    #############################################
+    - name: Download server ZIP (Google Drive)
+      shell: bash
+      env:
+        SERVER_URL: ${{ secrets.SERVER_URL }}
       run: |
-        $url = "${{ secrets.SERVER_URL }}"
-        Invoke-WebRequest -Uri $url -OutFile "BMS189Server_full.zip"
-        Write-Host "Downloaded: BMS189Server_full.zip"
+        echo "Downloading server from Google Drive..."
+        echo "URL: $SERVER_URL"
+        curl -L "$SERVER_URL" -o BMS189Server_full.zip
+        ls -lh BMS189Server_full.zip
 
-    # 4️⃣ Extract server ZIP (Windows supports Chinese filenames)
+    #############################################
+    # 3️⃣ Extract ZIP (Windows supports Chinese)
+    #############################################
     - name: Extract server ZIP
       shell: pwsh
       run: |
         if (Test-Path "server") { Remove-Item "server" -Recurse -Force }
         Expand-Archive -LiteralPath "BMS189Server_full.zip" -DestinationPath "server" -Force
+        Write-Host "Extract completed."
 
-    # 5️⃣ Repack server ZIP for release usage
+    #############################################
+    # 4️⃣ Repack server ZIP for Release
+    #############################################
     - name: Repack server ZIP
       shell: pwsh
       run: |
         if (Test-Path "BMS189Server.zip") { Remove-Item "BMS189Server.zip" -Force }
         Compress-Archive -Path "server" -DestinationPath "BMS189Server.zip" -Force
+        Write-Host "Repack completed."
 
-    # 6️⃣ Zip update folder
+    #############################################
+    # 5️⃣ Zip update folder
+    #############################################
     - name: Zip update folder
       shell: pwsh
       run: |
         if (Test-Path "update") {
           if (Test-Path "update.zip") { Remove-Item "update.zip" -Force }
           Compress-Archive -Path "update" -DestinationPath "update.zip" -Force
+          Write-Host "Update zip created."
         }
 
-    # 7️⃣ Create GitHub Release
+    #############################################
+    # 6️⃣ Create Release
+    #############################################
     - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
@@ -91,7 +105,9 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # 8️⃣ Discord Notification
+    #############################################
+    # 7️⃣ Discord Notification
+    #############################################
     - name: Send Discord Notification
       shell: pwsh
       run: |
@@ -116,3 +132,4 @@ jobs:
         } | ConvertTo-Json -Depth 10
 
         Invoke-RestMethod -Uri "${{ secrets.DISCORD_WEBHOOK }}" -Method Post -Body $payload -ContentType "application/json"
+
