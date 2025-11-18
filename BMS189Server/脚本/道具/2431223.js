@@ -1,0 +1,1 @@
+function start(){cm.dispose();cm.openNpc(0,"功能_背包清理")};

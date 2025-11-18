@@ -1,0 +1,1 @@
+function start(){cm.dispose();cm.warp(100000000, 0)};

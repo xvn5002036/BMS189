@@ -1,0 +1,37 @@
+/**
+-- BMS 道具脚本 ---------------------------------------------------------------------------
+道具 ID： %道具ID%
+道具名称： %道具名称%
+-- 更新日志 ---------------------------------------------------------------------------------------
+%创建时间% 创建模板
+---------------------------------------------------------------------------------------------------
+ **/
+
+// 全局变量
+var status = -1; // status: 当前聊天交互轮数
+var selectionLog = []; // 记录每一轮的选择
+
+// 开头
+function start() {
+	action(1, 0, 0);
+}
+function action(mode, type, selection) {
+	if (status == 0 && mode == 0) {
+		cm.dispose();
+		return;
+	}
+	(mode == 1) ? status++ : status--;
+	selectionLog[status] = selection;
+	var i = -1;
+	if (status <= i++) {
+		cm.dispose();
+	} else if (status === i++) {
+		var id = cm.getItemId();
+		var str = "#i" + id + "##z" + id + "#\r\n我也不知道这个道具应该能做什么……它的脚本位于： #b %SCRIPT_PATH%#k\r\n\r\n如果你有兴趣，欢迎一起来修复！\r\n";
+		str += "是否需要我帮你丢弃"+" #i" + id + "# (总共#b"+ cm.getItemQuantity(id) +"#k个)\r\n";
+		cm.askYesNo(str);
+	} else if (status === i++) {
+		cm.dispose();
+		cm.gainItem(cm.getItemId(), -cm.getItemQuantity(cm.getItemId()));
+	}
+}

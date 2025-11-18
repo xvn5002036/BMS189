@@ -1,0 +1,250 @@
+sendNext        【停止对话】【下一步】
+sendNextNoESC   【下一步】
+sendNextS       【停止对话】【下一步】
+sendNextSNoESC  【下一步】
+
+sendPrev        【停止对话】【上一步】
+sendNextPrev    【停止对话】【上一步】【下一步】
+sendOk          【停止对话】【确定】
+askYesNo        【停止对话】【是】【否】
+askMenu         【停止对话】【选择菜单】
+askAcceptDecline【停止对话】【接受】【拒绝】
+
+askText         【获取玩家输入的字符串】
+askNumber       【获取玩家输入的数字】
+
+以sendNext为例
+sendNext         对话框显示【停止对话】【下一步】按钮
+sendNextNoESC    对话框只显示【下一步】按钮
+sendNextS        对话框显示【停止对话】【下一步】按钮，但是对话框的NPC形象是角色自己
+sendNextSNoESC   对话框只显示【下一步】按钮，但是对话框的NPC形象是角色自己
+总结：
+函数包含S的，对话框的NPC形象是角色自己
+函数包含NoESC的，没有【停止对话】按钮
+用途：
+NoESC一般用在剧情动画之内的必须进行的剧情中，没有【停止对话】按钮，使得剧情必须进行下去
+S一般用在角色自言自语的对话中
+
+askMenu函数说明：
+这个函数以前叫sendSimple
+对话中如果包含\"#L\"这种有选项的，就可以使用这种函数
+askMenu函数如果对话中没有\"#L\"就会调用sendNext函数
+其他函数如果包含\"#L\"会跳转到askMenu这个函数
+
+后面还有几种不同对话框的函数
+如
+sendNext_New     一种在底部显示的对话框 没有 【是】【否】 【接受】【拒绝】【上一步】按钮
+sendNext_Bottom  剑豪阴阳师新手剧情那种在底部显示的对话框 没有【上一步】按钮
+sendNext_Illus   剑豪阴阳师新手剧情那种有NPC插画的对话框 所有的按钮都有，但是如果NPC没有插画的话，效果跟普通对话框一样
+ 
+
+public void sendNext(String text)
+public void sendNext(String text, byte bParam)
+public void sendNext(String text, byte bParam, int diffNpcID)
+
+public void sendNextNoESC(String text)
+public void sendNextNoESC(String text, byte bParam)
+public void sendNextNoESC(String text, byte bParam, int diffNpcID)
+
+public void sendNextS(String text)
+public void sendNextS(String text, byte bParam)
+public void sendNextS(String text, byte bParam, int diffNpcID)
+
+public void sendNextSNoESC(String text)
+public void sendNextSNoESC(String text, byte bParam)
+public void sendNextSNoESC(String text, byte bParam, int diffNpcID)
+
+public void sendPrev(String text)
+public void sendPrev(String text, byte bParam)
+public void sendPrev(String text, byte bParam, int idd)
+
+public void sendPrevNoESC(String text)
+public void sendPrevNoESC(String text, byte bParam)
+public void sendPrevNoESC(String text, byte bParam, int idd)
+
+public void sendPrevS(String text)
+public void sendPrevS(String text, byte bParam)
+public void sendPrevS(String text, byte bParam, int idd)
+
+public void sendPrevSNoESC(String text)
+public void sendPrevSNoESC(String text, byte bParam)
+public void sendPrevSNoESC(String text, byte bParam, int idd)
+
+public void sendNextPrev(String text)
+public void sendNextPrev(String text, byte bParam)
+public void sendNextPrev(String text, byte bParam, int diffNPC)
+
+public void sendNextPrevNoESC(String text)
+public void sendNextPrevNoESC(String text, byte bParam)
+public void sendNextPrevNoESC(String text, byte bParam, int diffNPC)
+
+public void sendNextPrevS(String text)
+public void sendNextPrevS(String text, byte bParam)
+public void sendNextPrevS(String text, byte bParam, int diffNPC)
+
+public void sendNextPrevSNoESC(String text)
+public void sendNextPrevSNoESC(String text, byte bParam)
+public void sendNextPrevSNoESC(String text, byte bParam, int diffNPC)
+
+public void sendOk(String text)
+public void sendOk(String text, byte bParam)
+public void sendOk(String text, byte bParam, int diffNPC)
+
+public void sendOkNoESC(String text)
+public void sendOkNoESC(String text, byte bParam)
+public void sendOkNoESC(String text, byte bParam, int diffNPC)
+
+public void sendOkS(String text)
+public void sendOkS(String text, byte bParam)
+public void sendOkS(String text, byte bParam, int diffNPC)
+
+public void sendOkSNoESC(String text)
+public void sendOkSNoESC(String text, byte bParam)
+public void sendOkSNoESC(String text, byte bParam, int diffNPC)
+
+public void askYesNo(String text)
+public void askYesNo(String text, byte bParam)
+public void askYesNo(String text, byte bParam, int diffNPC)
+public void askYesNoNoESC(String text)
+public void askYesNoNoESC(String text, byte bParam)
+public void askYesNoNoESC(String text, byte bParam, int diffNPC)
+public void askYesNoS(String text)
+public void askYesNoS(String text, byte bParam)
+public void askYesNoS(String text, byte bParam, int diffNPC)
+public void askYesNoSNoESC(String text)
+public void askYesNoSNoESC(String text, byte bParam)
+public void askYesNoSNoESC(String text, byte bParam, int diffNPC)
+public void askMenu(String text)
+public void askMenu(String text, byte bParam)
+public void askMenu(String text, byte bParam, int diffNPC)
+public void askMenuNoESC(String text)
+public void askMenuNoESC(String text, byte bParam)
+public void askMenuNoESC(String text, byte bParam, int diffNPC)
+public void askMenuS(String text)
+public void askMenuS(String text, byte bParam)
+public void askMenuS(String text, byte bParam, int diffNPC)
+public void askMenuSNoESC(String text)
+public void askMenuSNoESC(String text, byte bParam)
+public void askMenuSNoESC(String text, byte bParam, int diffNPC)
+public void askAcceptDecline(String text)
+public void askAcceptDecline(String text, byte bParam)
+public void askAcceptDecline(String text, byte bParam, int diffNPC)
+public void askAcceptDeclineNoESC(String text)
+public void askAcceptDeclineNoESC(String text, byte bParam)
+public void askAcceptDeclineNoESC(String text, byte bParam, int diffNPC)
+public void askAcceptDeclineS(String text)
+public void askAcceptDeclineS(String text, byte bParam)
+public void askAcceptDeclineS(String text, byte bParam, int diffNPC)
+public void askAcceptDeclineSNoESC(String text)
+public void askAcceptDeclineSNoESC(String text, byte bParam)
+public void askAcceptDeclineSNoESC(String text, byte bParam, int diffNPC)
+
+public void sendNext_New(String text)
+public void sendNext_New(String text, int diffNPC)
+public void sendNextNoESC_New(String text)
+public void sendNextNoESC_New(String text, int diffNPC)
+public void sendNextS_New(String text)
+public void sendNextS_New(String text, int diffNPC)
+public void sendNextSNoESC_New(String text)
+public void sendNextSNoESC_New(String text, int diffNPC)
+public void sendOk_New(String text)
+public void sendOk_New(String text, int diffNPC)
+public void sendOkNoESC_New(String text)
+public void sendOkNoESC_New(String text, int diffNPC)
+public void sendOkS_New(String text)
+public void sendOkS_New(String text, int diffNPC)
+public void sendOkSNoESC_New(String text)
+public void sendOkSNoESC_New(String text, int diffNPC)
+public void askMenu_New(String text)
+public void askMenu_New(String text, int diffNPC)
+public void askMenuNoESC_New(String text)
+public void askMenuNoESC_New(String text, int diffNPC)
+public void askMenuS_New(String text)
+public void askMenuS_New(String text, int diffNPC)
+public void askMenuSNoESC_New(String text)
+public void askMenuSNoESC_New(String text, int diffNPC)
+
+
+public void sendNext_Bottom(String text)
+public void sendNext_Bottom(String text, int diffNPC)
+public void sendNextNoESC_Bottom(String text)
+public void sendNextNoESC_Bottom(String text, int diffNPC)
+public void sendNextS_Bottom(String text)
+public void sendNextS_Bottom(String text, int diffNPC)
+public void sendNextSNoESC_Bottom(String text)
+public void sendNextSNoESC_Bottom(String text, int diffNPC)
+public void sendOk_Bottom(String text)
+public void sendOk_Bottom(String text, int diffNPC)
+public void sendOkNoESC_Bottom(String text)
+public void sendOkNoESC_Bottom(String text, int diffNPC)
+public void sendOkS_Bottom(String text)
+public void sendOkS_Bottom(String text, int diffNPC)
+public void sendOkSNoESC_Bottom(String text)
+public void sendOkSNoESC_Bottom(String text, int diffNPC)
+public void askYesNo_Bottom(String text)
+public void askYesNo_Bottom(String text, int diffNPC)
+public void askYesNoNoESC_Bottom(String text)
+public void askYesNoNoESC_Bottom(String text, int diffNPC)
+public void askYesNoS_Bottom(String text)
+public void askYesNoS_Bottom(String text, int diffNPC)
+public void askYesNoSNoESC_Bottom(String text)
+public void askYesNoSNoESC_Bottom(String text, int diffNPC)
+public void askAcceptDecline_Bottom(String text)
+public void askAcceptDecline_Bottom(String text, int diffNPC)
+public void askAcceptDeclineNoESC_Bottom(String text)
+public void askAcceptDeclineNoESC_Bottom(String text, int diffNPC)
+public void askAcceptDeclineS_Bottom(String text)
+public void askAcceptDeclineS_Bottom(String text, int diffNPC)
+public void askAcceptDeclineSNoESC_Bottom(String text)
+public void askAcceptDeclineSNoESC_Bottom(String text, int diffNPC)
+public void askMenu_Bottom(String text)
+public void askMenu_Bottom(String text, int diffNPC)
+public void askMenuNoESC_Bottom(String text)
+public void askMenuNoESC_Bottom(String text, int diffNPC)
+public void askMenuS_Bottom(String text)
+public void askMenuS_Bottom(String text, int diffNPC)
+public void askMenuSNoESC_Bottom(String text)
+public void askMenuSNoESC_Bottom(String text, int diffNPC)
+插画版
+public void sendNext_Illus(String text)
+public void sendNext_Illus(String text, int diffNPC)
+public void sendNext_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendNextNoESC_Illus(String text)
+public void sendNextNoESC_Illus(String text, int diffNPC)
+public void sendNextNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendPrev_Illus(String text)
+public void sendPrev_Illus(String text, int diffNPC)
+public void sendPrev_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendPrevNoESC_Illus(String text)
+public void sendPrevNoESC_Illus(String text, int diffNPC)
+public void sendPrevNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendNextPrev_Illus(String text)
+public void sendNextPrev_Illus(String text, int diffNPC)
+public void sendNextPrev_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendNextPrevNoESC_Illus(String text)
+public void sendNextPrevNoESC_Illus(String text, int diffNPC)
+public void sendNextPrevNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendOk_Illus(String text)
+public void sendOk_Illus(String text, int diffNPC)
+public void sendOk_Illus(String text, int diffNPC, int nFaceIndex)
+public void sendOkNoESC_Illus(String text)
+public void sendOkNoESC_Illus(String text, int diffNPC)
+public void sendOkNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void askYesNo_Illus(String text)
+public void askYesNo_Illus(String text, int diffNPC)
+public void askYesNo_Illus(String text, int diffNPC, int nFaceIndex)
+public void askYesNoNoESC_Illus(String text)
+public void askYesNoNoESC_Illus(String text, int diffNPC)
+public void askYesNoNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void askAcceptDecline_Illus(String text)
+public void askAcceptDecline_Illus(String text, int diffNPC)
+public void askAcceptDecline_Illus(String text, int diffNPC, int nFaceIndex)
+public void askAcceptDeclineNoESC_Illus(String text)
+public void askAcceptDeclineNoESC_Illus(String text, int diffNPC)
+public void askAcceptDeclineNoESC_Illus(String text, int diffNPC, int nFaceIndex)
+public void askMenu_Illus(String text)
+public void askMenu_Illus(String text, int diffNPC)
+public void askMenu_Illus(String text, int diffNPC, int nFaceIndex)
+public void askMenuNoESC_Illus(String text)
+public void askMenuNoESC_Illus(String text, int diffNPC)
+public void askMenuNoESC_Illus(String text, int diffNPC, int nFaceIndex)
