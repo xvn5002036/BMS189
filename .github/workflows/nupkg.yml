@@ -1,4 +1,4 @@
-name: Auto Build BMS189 Nupkg
+name: Build BMS189 Chocolatey Package
 
 on:
   push:
@@ -6,54 +6,90 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
-  build-nupkg:
+  build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    #######################################################
+    # 1️⃣ Checkout Repo
+    #######################################################
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Read version
-        id: version
-        run: |
-          $v = Get-Content version.txt
-          echo "version=$v" >> $env:GITHUB_ENV
-          Write-Host "Using version: $v"
+    #######################################################
+    # 2️⃣ Load version from version.txt
+    #######################################################
+    - name: Read version
+      shell: pwsh
+      run: |
+        if (!(Test-Path "version.txt")) {
+          Write-Host "version.txt not found!"
+          exit 1
+        }
+        $v = Get-Content version.txt
+        echo "version=$v" >> $env:GITHUB_ENV
+        Write-Host "Loaded version: $v"
 
-      - name: Install Chocolatey
-        run: |
-          Set-ExecutionPolicy Bypass -Scope Process -Force
-          Invoke-WebRequest https://community.chocolatey.org/install.ps1 -UseBasicParsing | Invoke-Expression
+    #######################################################
+    # 3️⃣ Install Chocolatey
+    #######################################################
+    - name: Install Chocolatey
+      shell: pwsh
+      run: |
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        iex ((New-Object System.Net.WebClient).DownloadString('https://community.chocolatey.org/install.ps1'))
 
-      - name: Build nupkg
-        run: |
-          choco pack
-          $v = $env:version
-          Write-Host "Built: bms189.$v.nupkg"
+    #######################################################
+    # 4️⃣ Build .nupkg 正式包
+    #######################################################
+    - name: Build nupkg
+      shell: pwsh
+      run: |
+        Write-Host "Building BMS189 Chocolatey package version $env:version"
+        choco pack --version "$env:version"
+        Write-Host "nupkg created."
 
-      - name: Prepare choco directory
-        run: |
-          if (!(Test-Path "choco")) {
-            New-Item -ItemType Directory -Path "choco"
-          }
+    #######################################################
+    # 5️⃣ 建立 choco 目錄
+    #######################################################
+    - name: Prepare choco directory
+      shell: pwsh
+      run: |
+        if (!(Test-Path "choco")) { New-Item -ItemType Directory -Path "choco" | Out-Null }
 
-      - name: Move nupkg to choco directory
-        run: |
-          $v = $env:version
-          Move-Item "bms189.$v.nupkg" "choco/bms189.$v.nupkg" -Force
+    #######################################################
+    # 6️⃣ 把 nupkg 移動到 choco/
+    #######################################################
+    - name: Move nupkg to choco directory
+      shell: pwsh
+      run: |
+        Get-ChildItem "*.nupkg" | Move-Item -Destination "choco" -Force
+        Write-Host "Moved nupkg to choco folder."
 
-      - name: Clean old nupkg files (keep latest 20)
-        run: |
-          $files = Get-ChildItem "choco" -Filter "*.nupkg" | Sort-Object LastWriteTime -Descending
+    #######################################################
+    # 7️⃣ 清理舊版本（保留最新 20）
+    #######################################################
+    - name: Clean old nupkg files (keep latest 20)
+      shell: pwsh
+      run: |
+        $files = Get-ChildItem "choco" -Filter "*.nupkg" | Sort-Object LastWriteTime -Descending
+        if ($files.Count -gt 20) {
           $files | Select-Object -Skip 20 | Remove-Item -Force
+        }
 
-      - name: Commit and push changes
-        run: |
-          git config user.email "actions@github.com"
-          git config user.name "GitHub Actions"
-          git add choco/
-          git commit -m "Auto update nupkg for version $env:version" || echo "Nothing to commit"
-          git push || echo "Nothing to push"
+    #######################################################
+    # 8️⃣ Push 更新後的 nupkg 至 Repo
+    #######################################################
+    - name: Commit and push changes
+      shell: pwsh
+      run: |
+        git config user.email "actions@github.com"
+        git config user.name "GitHub Actions"
+
+        git add choco
+        git commit -m "Auto update nupkg for version $env:version" || echo "Nothing to commit."
+        git push origin main
