@@ -1,4 +1,4 @@
-name: Auto Release BMS189 Server
+name: Auto Release BMS189 (GoogleDrive Single File)
 
 on:
   push:
@@ -7,107 +7,73 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-release:
-    runs-on: windows-latest
+  build:
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+    - name: Checkout repo
+      uses: actions/checkout@v4
 
-      - name: Initialize or Increment version.txt (custom rules)
-        id: versioning
-        run: |
-          $commitMsg = git log -1 --pretty=%B
-          Write-Host "Last commit message: $commitMsg"
+    # 1️⃣ Install gdown
+    - name: Install gdown
+      run: pip install gdown
 
-          $level = "patch"
-          if ($commitMsg -match '\[major\]' -or $commitMsg -match 'MAJOR:') {
-            $level = "major"
-          } elseif ($commitMsg -match '\[minor\]' -or $commitMsg -match 'MINOR:') {
-            $level = "minor"
-          }
+    # 2️⃣ Versioning
+    - name: Versioning
+      id: version
+      run: |
+        msg=$(git log -1 --pretty=%B)
+        level="patch"
+        if [[ "$msg" == *"MAJOR"* ]] || [[ "$msg" == *"[major]"* ]]; then level="major"; fi
+        if [[ "$msg" == *"MINOR"* ]] || [[ "$msg" == *"[minor]"* ]]; then level="minor"; fi
 
-          Write-Host "Detected version level: $level"
+        if [[ -f version.txt ]]; then
+            ver=$(cat version.txt)
+        else
+            ver="1.0.0"
+        fi
 
-          $file = "version.txt"
-          if (!(Test-Path $file)) {
-            $version = "1.0.0"
-            Write-Host "version.txt not found, init to $version"
-          } else {
-            $version = (Get-Content $file).Trim()
-            Write-Host "Current version: $version"
-          }
+        IFS='.' read -r major minor patch <<< "$ver"
+        if [[ "$level" == "major" ]]; then major=$((major+1)); minor=0; patch=0; fi
+        if [[ "$level" == "minor" ]]; then minor=$((minor+1)); patch=0; fi
+        if [[ "$level" == "patch" ]]; then patch=$((patch+1)); fi
 
-          $parts = $version.Split(".")
-          [int]$major = $parts[0]
-          [int]$minor = $parts[1]
-          [int]$patch = $parts[2]
+        new="$major.$minor.$patch"
+        echo $new > version.txt
+        echo "version=$new" >> $GITHUB_ENV
 
-          switch ($level) {
-            "major" {
-              $major++
-              $minor = 0
-              $patch = 0
-            }
-            "minor" {
-              $minor++
-              $patch = 0
-            }
-            "patch" {
-              $patch++
-            }
-          }
+    # 3️⃣ Download the server from Google Drive
+    - name: Download server package
+      run: |
+        gdown "${{ secrets.SERVER_URL }}" -O BMS189Server_full.zip
+        echo "Downloaded BMS189Server from Google Drive."
 
-          $newVersion = "$major.$minor.$patch"
-          Write-Host "New version: $newVersion"
+    # 4️⃣ Extract full server
+    - name: Extract server
+      run: |
+        mkdir server
+        unzip BMS189Server_full.zip -d server
 
-          Set-Content -Path $file -Value $newVersion
-          echo "version=$newVersion" >> $env:GITHUB_ENV
+    # 5️⃣ Repack as Release ZIP
+    - name: Repack server
+      run: |
+        zip -r BMS189Server.zip server
 
-      - name: Copy version.txt to server folder
-        run: |
-          Copy-Item version.txt BMS189Server/version.txt -Force
-          Write-Host "version.txt copied to BMS189Server/"
+    # 6️⃣ Zip update folder
+    - name: Zip update
+      run: |
+        if [ -d update ]; then
+          zip -r update.zip update
+        fi
 
-      - name: Zip BMS189Server
-        run: |
-          Compress-Archive -Path BMS189Server -DestinationPath BMS189Server.zip -Force
-          Write-Host "BMS189Server.zip created"
-
-      - name: Zip update folder
-        run: |
-          if (Test-Path "update") {
-            Compress-Archive -Path update -DestinationPath update.zip -Force
-            Write-Host "update.zip created"
-          }
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ env.version }}
-          files: |
-            BMS189Server.zip
-            update.zip
-            version.txt
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cleanup old releases
-        run: |
-          $releases = gh release list --limit 100 | Select-Object -Skip 5
-          foreach ($r in $releases) {
-            $tag = $r.Split(" ")[0]
-            if ($tag) {
-              gh release delete $tag -y
-            }
-          }
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Cleanup old workflow artifacts
-        uses: kolpav/purge-artifacts-action@v1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          expire-in: 1day
+    # 7️⃣ Create Release
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v${{ env.version }}
+        files: |
+          BMS189Server.zip
+          update.zip
+          version.txt
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
