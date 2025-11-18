@@ -1,4 +1,4 @@
-name: Auto Release BMS189 (GoogleDrive Single File)
+name: Auto Release BMS189 (GoogleDrive ZIP)
 
 on:
   push:
@@ -11,16 +11,15 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 1️⃣ Install gdown
+    # 1️⃣ 安裝 gdown（支援 Google Drive 大檔）
     - name: Install gdown
       run: pip install gdown
 
-    # 2️⃣ Versioning
+    # 2️⃣ 處理版本號（Major / Minor / Patch）
     - name: Versioning
-      id: version
       run: |
         msg=$(git log -1 --pretty=%B)
         level="patch"
@@ -42,32 +41,32 @@ jobs:
         echo $new > version.txt
         echo "version=$new" >> $GITHUB_ENV
 
-    # 3️⃣ Download the server from Google Drive
-    - name: Download server package
+    # 3️⃣ 從 Google Drive 下載 ZIP 服務端
+    - name: Download server ZIP from Google Drive
       run: |
         gdown "${{ secrets.SERVER_URL }}" -O BMS189Server_full.zip
-        echo "Downloaded BMS189Server from Google Drive."
+        echo "Downloaded server package."
 
-    # 4️⃣ Extract full server
-    - name: Extract server
+    # 4️⃣ 解壓縮 Server ZIP
+    - name: Extract server ZIP
       run: |
         mkdir server
         unzip BMS189Server_full.zip -d server
 
-    # 5️⃣ Repack as Release ZIP
-    - name: Repack server
+    # 5️⃣ 重新打包服務端（給 Release 用）
+    - name: Repack server ZIP
       run: |
         zip -r BMS189Server.zip server
 
-    # 6️⃣ Zip update folder
-    - name: Zip update
+    # 6️⃣ 打包 update 資料夾
+    - name: Zip update folder
       run: |
         if [ -d update ]; then
           zip -r update.zip update
         fi
 
-    # 7️⃣ Create Release
-    - name: Create Release
+    # 7️⃣ 發布 GitHub Release
+    - name: Create GitHub Release
       uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ env.version }}
